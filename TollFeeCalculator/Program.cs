@@ -1,66 +1,116 @@
 ﻿using System;
+using System.Linq;
 
 namespace TollFeeCalculator
 {
-    class Program
+    public class Program
     {
-        static void Main()
+        public static void Main()
         {
-            run(Environment.CurrentDirectory + "../../../../testData.txt");
+            var inputFile = Environment.CurrentDirectory + "../../../../testData.txt";
+            Run(inputFile);
         }
 
-        static void run(String inputFile)
+        public static void Run(String inputFile)
         {
-            string indata = System.IO.File.ReadAllText(inputFile);
-            String[] dateStrings = indata.Split(", ");
-            DateTime[] dates = new DateTime[dateStrings.Length - 1];
+            DateTime[] tollPasses = ParseDataFromFile(inputFile);
+            PrintMessage(CalculateTotalFee(tollPasses));
+        }
+
+        public static void PrintMessage(int totalFeeToPay)
+        {
+            Console.Write("The total fee for the inputfile is " + totalFeeToPay);
+        }
+
+        public static DateTime[] ParseDataFromFile(String inputFile)
+        {
+            string indata;
+            indata = System.IO.File.ReadAllText(inputFile);
+            String[] dateStrings = indata.Split(",");
+            DateTime[] dates = new DateTime[dateStrings.Length];
             for (int i = 0; i < dates.Length; i++)
             {
-                dates[i] = DateTime.Parse(dateStrings[i]);
+                try
+                {
+                    dates[i] = DateTime.Parse(dateStrings[i]);
+                }
+                catch (Exception)
+                {
+                    throw;
+                }
             }
-            Console.Write("The total fee for the inputfile is" + TotalFeeCost(dates));
+            return dates;
         }
 
-        static int TotalFeeCost(DateTime[] d)
+        public static int CalculateTotalFee(DateTime[] tollPasses)
         {
-            int fee = 0;
-            DateTime si = d[0]; //Starting interval
-            foreach (var d2 in d)
+            var sortedPasses = getOneDate(tollPasses);
+            int totalFee = 0;
+            foreach (var day in sortedPasses)
             {
-                long diffInMinutes = (d2 - si).Minutes;
-                if (diffInMinutes > 60)
+                DateTime lastedBilled = day.First(); //Starting interval
+                var IsFirstPassOfDay = true;
+                var dailyFee = 0;
+                foreach (var pass in day)
                 {
-                    fee += TollFeePass(d2);
-                    si = d2;
+                    var diffInMinutes = (pass - lastedBilled).TotalMinutes;
+                    if (diffInMinutes > 60 || IsFirstPassOfDay)
+                    {
+                        dailyFee += TollFeePassageCost(pass);
+                        IsFirstPassOfDay = false;
+                        lastedBilled = pass;
+                    }
+                    else
+                    {
+                        dailyFee += CalculateHighestCost(lastedBilled, pass);
+                    }
                 }
-                else
-                {
-                    fee += Math.Max(TollFeePass(d2), TollFeePass(si));
-                }
+                totalFee += dailyFee >= 60 ? 60 : dailyFee;
             }
-            return Math.Max(fee, 60);
+            return totalFee;
         }
 
-        static int TollFeePass(DateTime d)
+        public static IGrouping<DateTime, DateTime>[] getOneDate(DateTime[] unsortedPasses)
         {
-            if (free(d)) return 0;
+            var sortedDates = unsortedPasses.GroupBy(d => d.Date).OrderBy(m => m.Key.TimeOfDay).Take(1).ToArray();
+            return sortedDates;
+        }
+
+        public static int CalculateHighestCost(DateTime first, DateTime second)
+        {
+            int highestFee;
+            if (TollFeePassageCost(first) >= TollFeePassageCost(second))
+            {
+                highestFee = 0;
+            }
+            else
+            {
+                highestFee = TollFeePassageCost(second) - TollFeePassageCost(first);
+            }
+            return highestFee;
+        }
+
+        public static int TollFeePassageCost(DateTime d)
+        {
+            if (IsFree(d)) return 0;
             int hour = d.Hour;
             int minute = d.Minute;
             if (hour == 6 && minute >= 0 && minute <= 29) return 8;
             else if (hour == 6 && minute >= 30 && minute <= 59) return 13;
             else if (hour == 7 && minute >= 0 && minute <= 59) return 18;
             else if (hour == 8 && minute >= 0 && minute <= 29) return 13;
-            else if (hour >= 8 && hour <= 14 && minute >= 30 && minute <= 59) return 8;
+            else if (hour == 8 && minute >= 30 && minute <= 59) return 8;
+            else if (hour >= 9 && hour <= 14 && minute >= 0 && minute <= 59) return 8;
             else if (hour == 15 && minute >= 0 && minute <= 29) return 13;
             else if (hour == 15 && minute >= 0 || hour == 16 && minute <= 59) return 18;
             else if (hour == 17 && minute >= 0 && minute <= 59) return 13;
             else if (hour == 18 && minute >= 0 && minute <= 29) return 8;
             else return 0;
         }
-        //Gets free dates
-        static bool free(DateTime day)
+
+        static public bool IsFree(DateTime day)
         {
-            return (int)day.DayOfWeek == 5 || (int)day.DayOfWeek == 6 || day.Month == 7;
+            return day.Month == 7 || day.DayOfWeek == DayOfWeek.Saturday || day.DayOfWeek == DayOfWeek.Sunday;
         }
     }
 }
