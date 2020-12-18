@@ -7,9 +7,10 @@ using TollFeeCalculator;
 namespace TollFeeCalculatorTest
 {
     [TestClass]
-    public class UnitTest1
+    public class TollFeeCalculatorTest
     {
         private readonly string _filePath = Environment.CurrentDirectory + "../../../../testData.txt";
+        public TollFeeCalculator.TollFeeCalculator program = new TollFeeCalculator.TollFeeCalculator();
 
         [TestMethod]
         public void PrintMessageTest()
@@ -18,7 +19,7 @@ namespace TollFeeCalculatorTest
             using (StringWriter sw = new StringWriter())
             {
                 Console.SetOut(sw);
-                Program.Run(_filePath);
+                program.Run(_filePath);
                 Assert.IsTrue(sw.ToString().Contains(expected));
             }
         }
@@ -28,20 +29,20 @@ namespace TollFeeCalculatorTest
         {
             //July
             var testDate = DateTime.Parse("2020-07-15 00:00");
-            Assert.AreEqual(true, Program.IsFree(testDate));
+            Assert.AreEqual(true, program.IsDateAFreeDate(testDate));
             //Sunday
             testDate = DateTime.Parse("2020-12-06 15:00");
-            Assert.AreEqual(true, Program.IsFree(testDate));
+            Assert.AreEqual(true, program.IsDateAFreeDate(testDate));
             //Friday
             testDate = DateTime.Parse("2020-10-16 12:30");
-            Assert.AreEqual(false, Program.IsFree(testDate));
+            Assert.AreEqual(false, program.IsDateAFreeDate(testDate));
         }
 
         [TestMethod]
         public void TollFeePassageCostTest()
         {
             var testDate = DateTime.Parse("2020-12-07 14:15");
-            var cost = Program.TollFeePassageCost(testDate);
+            var cost = program.TollFeePassageCost(testDate);
             Assert.AreEqual(8, cost);
         }
 
@@ -53,7 +54,7 @@ namespace TollFeeCalculatorTest
                 DateTime.Parse("2020-10-22 15:35"), 
                 DateTime.Parse("2020-10-22 16:55")
             }; 
-            var actual = Program.CalculateTotalFee(testDate);
+            var actual = program.CalculateTotalFee(testDate);
             Assert.IsTrue(actual <= 60);
         }
 
@@ -70,7 +71,7 @@ namespace TollFeeCalculatorTest
                 DateTime.Parse("2020-10-22 16:55"),
                 DateTime.Parse("2020-10-22 17:56")                
             };
-            var cost = Program.CalculateTotalFee(testDate);
+            var cost = program.CalculateTotalFee(testDate);
             Assert.IsTrue(cost == 60);
         }
 
@@ -83,7 +84,7 @@ namespace TollFeeCalculatorTest
                 DateTime.Parse("2020-10-22 16:36")
             };
             var expected = 36;
-            var actual = Program.CalculateTotalFee(testDate);
+            var actual = program.CalculateTotalFee(testDate);
             Assert.AreEqual(expected, actual);
 
             testDate = new[]
@@ -92,7 +93,7 @@ namespace TollFeeCalculatorTest
                 DateTime.Parse("2020-10-22 16:35")
             };
             expected = 18;
-            actual = Program.CalculateTotalFee(testDate);
+            actual = program.CalculateTotalFee(testDate);
             Assert.AreEqual(expected, actual);
         }
 
@@ -104,14 +105,14 @@ namespace TollFeeCalculatorTest
                 DateTime.Parse("2020-01-01 14:59"),
                 DateTime.Parse("2020-01-01 15:00")
             };
-            Assert.IsTrue(Program.CalculateTotalFee(passages) == 13);
+            Assert.IsTrue(program.CalculateTotalFee(passages) == 13);
 
             passages = new DateTime[]
             {
                 DateTime.Parse("2020-01-01 16:59"),
                 DateTime.Parse("2020-01-01 17:00")
             };
-            Assert.IsTrue(Program.CalculateTotalFee(passages) == 18);
+            Assert.IsTrue(program.CalculateTotalFee(passages) == 18);
         }
     }
 }
