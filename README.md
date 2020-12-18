@@ -12,3 +12,4 @@ Buggar:
 8. Spannet för när en passage kostar eller inte fungerar inte
 9. Kostnad läggs på istället för att den högsta kostnaden väljs när flera passager sker på en timme
 10. Alla datum i filen tas med.
+11. Ingen try-catch för att fånga felaktiga datum i input-filen
